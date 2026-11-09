@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Broadcast</title>
+  <!-- Google Fonts: Cairo (Arabic + Latin) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- TOP HEADER / METRICS BAR -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-logo-wrapper">
+          <img src="logo.png" alt="Logo" class="brand-logo-img">
+        </div>
+        <div class="brand-info">
+          <h1>Broadcast bot</h1>
+          <span class="sub-text"></span>
+        </div>
+      </div>
+
+      <!-- Stats Counters per Session -->
+      <div class="session-stats-container">
+        <div class="stat-card stat-success">
+          <div class="stat-icon-wrapper">
+            <i data-lucide="check-circle-2"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">تم الإرسال بنجاح</span>
+            <span class="stat-number" id="statSuccess">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-failed">
+          <div class="stat-icon-wrapper">
+            <i data-lucide="x-circle"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">فشل الإرسال</span>
+            <span class="stat-number" id="statFailed">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-remaining">
+          <div class="stat-icon-wrapper">
+            <i data-lucide="clock-3"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">الأعضاء المتبقيين</span>
+            <span class="stat-number" id="statRemaining">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-total">
+          <div class="stat-icon-wrapper">
+            <i data-lucide="users"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">إجمالي المستهدفين</span>
+            <span class="stat-number" id="statTotal">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-bots">
+          <div class="stat-icon-wrapper">
+            <i data-lucide="bot"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">البوتات الجاهزة</span>
+            <span class="stat-number" id="statBotsReady">0</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD BODY (2 COLUMNS: LEFT CONTROLS, RIGHT/CENTER CONSOLE) -->
+    <main class="dashboard-grid">
+      
+      <!-- LEFT COLUMN: CONTROLS -->
+      <section class="controls-column">
+        
+        <!-- SECTION 2: MESSAGE CONTENT (Top) -->
+        <div class="panel message-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <i data-lucide="message-square-text"></i>
+              <h2>محتوى الرسالة</h2>
+            </div>
+            <div class="char-counter" id="charCounter"></div>
+          </div>
+          <div class="panel-body">
+            <textarea 
+              id="broadcastMessage" 
+              placeholder="اكتب هنا نص الرسالة التي سيتم إرسالها لجميع الأعضاء المستهدفين في السيرفر..."
+              rows="6"
+            ></textarea>
+            <div class="variables-hint">
+              <span>المتغيرات</span>
+              <code class="var-tag" data-tag="{user}">{user}</code>
+              <code class="var-tag" data-tag="{username}">{username}</code>
+              <code class="var-tag" data-tag="{server}">{server}</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: TARGET LIMIT & SERVER ID (Below message, right aligned) -->
+        <div class="panel target-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <i data-lucide="sliders-horizontal"></i>
+              <h2>إعدادات السيرفر</h2>
+            </div>
+          </div>
+          <div class="panel-body grid-2-inputs">
+            <div class="input-group">
+              <label for="serverId">
+                <i data-lucide="hash"></i>
+                <span>(Server ID)</span>
+              </label>
+              <input 
+                type="text" 
+                id="serverId" 
+                name="server_id_broadcast_custom"
+                placeholder="مثال: 112233445566778899"
+                autocomplete="new-password"
+                autocapitalize="off"
+                spellcheck="false"
+              >
+            </div>
+
+            <div class="input-group">
+              <label for="targetCount">
+                <i data-lucide="user-check"></i>
+                <span>عدد الأشخاص المستهدفين</span>
+              </label>
+              <input 
+                type="number" 
+                id="targetCount" 
+                placeholder="100,10"
+                min="1"
+              >
+            </div>
+
+            <div class="action-buttons-group">
+              <button id="btnFetchMembers" class="btn btn-secondary">
+                <i data-lucide="users-round"></i>
+                <span>فحص السيرفر والأعضاء</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel tokens-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <i data-lucide="key-round"></i>
+              <h2>توكنات البوتات</h2>
+            </div>
+            <div class="tokens-badge" id="tokensBadge">0 توكن</div>
+          </div>
+          <div class="panel-body">
+            <div class="token-add-row">
+              <div class="token-input-wrapper">
+                <i data-lucide="shield-check"></i>
+                <input 
+                  type="password" 
+                  id="tokenInput" 
+                  name="bot_token_input_custom"
+                  placeholder="أدخل توكن البوت هنا ثم اضغط إضافة أو Enter..."
+                  autocomplete="new-password"
+                  autocapitalize="off"
+                  spellcheck="false"
+                >
+              </div>
+              <button id="btnAddToken" class="btn btn-primary">
+                <i data-lucide="plus"></i>
+                <span>إضافة توكن</span>
+              </button>
+            </div>
+
+            <!-- Bulk tokens helper -->
+            <div class="bulk-toggle-wrap">
+              <button type="button" id="btnToggleBulk" class="btn-text">
+                <i data-lucide="file-text"></i>
+                <span>إضافة عدة توكنات دفعة واحدة (لصق أو رفع ملف TXT)</span>
+              </button>
+              <button type="button" id="btnClearAllTokens" class="btn-text btn-text-danger" title="حذف جميع التوكنات">
+                <i data-lucide="trash"></i>
+                <span>حذف الكل</span>
+              </button>
+            </div>
+            <div id="bulkTokensArea" class="bulk-tokens-area" style="display: none;">
+              <!-- Drag and Drop File Zone -->
+              <div class="file-drop-zone" id="fileDropZone">
+                <i data-lucide="upload-cloud"></i>
+                <p class="drop-main-text">اسحب وأفلت ملف <code>.txt</code> هنا</p>
+                <span class="drop-sub-text">أو اضغط لاختيار ملف من جهازك</span>
+                <input type="file" id="txtFileInput" accept=".txt" style="display: none;">
+              </div>
+
+              <textarea id="bulkTokensInput" placeholder="أو الصق قائمة التوكنات يدوياً هنا (كل توكن في سطر منفصل)..." rows="4"></textarea>
+              <div class="bulk-actions-row">
+                <button id="btnAddBulkTokens" class="btn btn-secondary btn-sm">
+                  <i data-lucide="layers"></i>
+                  <span>استخراج وإدراج التوكنات</span>
+                </button>
+                <span class="bulk-info-text" id="bulkDetectedCount">0 توكن محدد</span>
+              </div>
+            </div>
+
+            <!-- Token List / Cards -->
+            <div class="tokens-list-wrapper" id="tokensList">
+              <div class="empty-placeholder">
+                <i data-lucide="bot-off"></i>
+                <p>لم يتم إضافة أي توكن بعد. يمكنك إضافة أي عدد تريده من البوتات لتوزيع الحمل وتسريع الإرسال.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- CENTER / RIGHT COLUMN: CONSOLE AND CONTROLS -->
+      <section class="console-column">
+        <div class="panel console-panel">
+          <div class="panel-header console-header">
+            <div class="panel-title-group">
+              <i data-lucide="terminal"></i>
+              <h2>Console Log</h2>
+            </div>
+            <div class="console-actions">
+              <div class="status-indicator-wrap">
+                <span class="status-dot" id="systemStatusDot"></span>
+                <span class="status-label" id="systemStatusText">جاهز للنظام</span>
+              </div>
+              <button id="btnClearConsole" class="btn-icon" title="مسح سجل الكونسول">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Console Screen -->
+          <div class="console-screen" id="consoleScreen">
+            <div class="console-welcome" id="consoleWelcome">
+              <pre class="ascii-art">
+8888888888P                  888            d8b                .d8888b.                888          
+      d88P                   888            Y8P               d88P  Y88b               888          
+     d88P                    888                              888    888               888          
+    d88P   888  888 88888b.  888888 888d888 888 888  888      888         .d88b.   .d88888  .d88b.  
+   d88P    888  888 888 "88b 888    888P"   888 `Y8bd8P'      888        d88""88b d88" 888 d8P  Y8b 
+  d88P     888  888 888  888 888    888     888   X88K        888    888 888  888 888  888 88888888 
+ d88P      Y88b 888 888  888 Y88b.  888     888 .d8""8b.      Y88b  d88P Y88..88P Y88b 888 Y8b.     
+d8888888888 "Y88888 888  888  "Y888 888     888 888  888       "Y8888P"   "Y88P"   "Y88888  "Y8888  
+                888                                                                                 
+           Y8b d88P                                                                                 
+            "Y88P"                                                                                  
+              </pre>
+            </div>
+            <div id="consoleLogs"></div>
+          </div>
+
+          <!-- Console Master Action Footer -->
+          <div class="console-footer">
+            <div class="footer-progress-bar">
+              <div class="progress-track">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+              </div>
+              <div class="progress-text-wrap">
+                <span id="progressPercentage">0%</span>
+                <span id="progressDetails">في انتظار بدء الحملة...</span>
+              </div>
+            </div>
+
+            <div class="master-buttons">
+              <button id="btnStartBroadcast" class="btn btn-primary btn-lg">
+                <i data-lucide="send"></i>
+                <span>بدء البرودكاست الآن</span>
+              </button>
+              <button id="btnStopBroadcast" class="btn btn-danger btn-lg" disabled>
+                <i data-lucide="square"></i>
+                <span>إيقاف الإرسال</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Custom Dark Confirmation Modal -->
+  <div id="customConfirmModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-icon-wrap">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+        <h3 id="modalTitle">تأكيد الحذف</h3>
+      </div>
+      <p id="modalMessage" class="modal-body-text">هل أنت متأكد من رغبتك في حذف وتفريغ جميع التوكنات المحفوظة؟</p>
+      <div class="modal-actions">
+        <button id="modalBtnCancel" class="btn btn-secondary">إلغاء</button>
+        <button id="modalBtnConfirm" class="btn btn-danger">تأكيد الحذف</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

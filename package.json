@@ -1,0 +1,15 @@
+{
+  "name": "discord-broadcast-dashboard",
+  "version": "1.0.0",
+  "description": "Discord Multi-Bot Broadcast Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.28.1",
+    "discord.js-selfbot-v13": "^3.7.1",
+    "express": "^4.22.3",
+    "ws": "^8.22.2"
+  }
+}
